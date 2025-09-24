@@ -21,7 +21,6 @@ export const createBooking = async (req, res) => {
     );
 
     const available = await isVehicleAvailable(vehicleId, start, end);
-
     if (!available) {
       return res
         .status(409)
@@ -37,7 +36,31 @@ export const createBooking = async (req, res) => {
       customerId,
     });
 
-    return res.status(201).json(booking, estimatedRideDurationHours);
+    return res.status(201).json({ booking, estimatedRideDurationHours });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find().populate("vehicleId");
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const deleteBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    await Booking.findByIdAndDelete(id);
+    return res.status(200).json({ message: "Booking cancelled successfully" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server Error" });

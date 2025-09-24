@@ -2,6 +2,16 @@ import { Vehicle } from "../models/vehicle.model.js";
 import { isVehicleAvailable } from "../utils/isVehicleAvailable.js";
 import { getRideSpan } from "../utils/rideTime.js";
 
+export const getAllVehicles = async (req, res) => {
+  try {
+    const allVehicles = await Vehicle.find();
+    return res.status(200).json(allVehicles);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
 export const addVehicle = async (req, res) => {
   try {
     const { name, capacityKg, tyres } = req.body;

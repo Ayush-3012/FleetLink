@@ -1,5 +1,9 @@
 import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { getAvailableVehicles, createBooking } from "../services/api";
+import VehicleList from "../components/VehicleList";
+import { toast } from "react-toastify";
 
 export default function SearchAndBook() {
   const [form, setForm] = useState({
@@ -40,26 +44,30 @@ export default function SearchAndBook() {
         fromPincode: form.fromPincode,
         toPincode: form.toPincode,
         startTime: form.startTime,
-        customerId: "cust123", 
+        customerId: "cust123", // temp user Id for testing.
       };
       const res = await createBooking(bookingData);
       setMessage(
         `✅ Booking Confirmed! Duration: ${res.data.estimatedRideDurationHours} hours`
       );
-      // Optional: remove booked vehicle from list
+      toast.success(
+        `✅ Booking Confirmed! Duration: ${res.data.estimatedRideDurationHours} hours`
+      );
       setVehicles(vehicles.filter((v) => v._id !== vehicleId));
     } catch (err) {
       if (err.response && err.response.status === 409) {
         setMessage("❌ Vehicle already booked, please try another one");
+        toast.error("❌ Vehicle already booked, please try another one");
       } else {
         setMessage("❌ Error creating booking");
+        toast.error("❌ Error creating booking");
       }
     }
     setLoading(false);
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-2xl shadow">
+    <div className="max-w-3xl mx-auto p-6 bg-slate-100 rounded-2xl shadow-[0_0_5px] shadow-slate-800">
       <h2 className="text-xl font-bold mb-4">Search & Book Vehicle</h2>
 
       {/* Search Form */}
@@ -91,51 +99,43 @@ export default function SearchAndBook() {
           className="p-2 border rounded"
           required
         />
-        <input
+        {/* <input
           type="datetime-local"
           name="startTime"
           value={form.startTime}
           onChange={handleChange}
           className="p-2 border rounded"
           required
+        /> */}
+        <DatePicker
+          selected={form.startTime ? new Date(form.startTime) : null}
+          onChange={(date) =>
+            setForm({ ...form, startTime: date.toISOString() })
+          }
+          showTimeSelect
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          dateFormat="yyyy-MM-dd HH:mm"
+          placeholderText="Select start date & time"
+          className="p-2 border rounded w-full"
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 cursor-pointer hover:scale-x-105 duration-150 transition-all text-white py-2 rounded hover:bg-teal-700"
           disabled={loading}
         >
           {loading ? "Searching..." : "Search Availability"}
         </button>
       </form>
 
-      {/* Message */}
       {message && <p className="mb-4">{message}</p>}
 
-      {/* Vehicles List */}
       {vehicles.length > 0 && (
-        <div className="space-y-4">
-          {vehicles.map((v) => (
-            <div
-              key={v._id}
-              className="p-4 border rounded flex justify-between items-center"
-            >
-              <div>
-                <h3 className="font-semibold">{v.name}</h3>
-                <p>
-                  Capacity: {v.capacityKg} kg | Tyres: {v.tyres}
-                </p>
-                <p>Estimated Duration: {v.estimatedRideDurationHours} hours</p>
-              </div>
-              <button
-                className="bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700"
-                onClick={() => handleBook(v._id)}
-                disabled={loading}
-              >
-                Book Now
-              </button>
-            </div>
-          ))}
-        </div>
+        <VehicleList
+          vehicles={vehicles}
+          onBook={handleBook}
+          loading={loading}
+        />
       )}
     </div>
   );
